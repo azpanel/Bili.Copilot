@@ -53,6 +53,7 @@ public sealed partial class VideoCardControl : LayoutControlBase<VideoItemViewMo
     /// <inheritdoc/>
     protected override void OnViewModelChanged(VideoItemViewModel? oldValue, VideoItemViewModel? newValue)
     {
+        ContextFlyout = null;  // ← 加这一行，强制下次右键重新创建菜单
         if (_rootCard is not null)
         {
             _rootCard.Command = newValue?.PlayCommand;
