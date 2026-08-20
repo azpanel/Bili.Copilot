@@ -11,10 +11,26 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <base:SettingsCard Description="{ext:Locale Name=TopNavVisibilityDescription}" Header="{ext:Locale Name=TopNavVisibility}">
-        <base:SettingsCard.HeaderIcon>
-            <ic:SymbolIcon Symbol="LayoutColumnTwo" />
-        </base:SettingsCard.HeaderIcon>
-        <ToggleSwitch IsOn="{x:Bind ViewModel.IsTopNavShown, Mode=TwoWay}" />
-    </base:SettingsCard>
+    <StackPanel Spacing="4">
+        <base:SettingsCard Description="{ext:Locale Name=TopNavVisibilityDescription}" Header="{ext:Locale Name=TopNavVisibility}">
+            <base:SettingsCard.HeaderIcon>
+                <ic:SymbolIcon Symbol="LayoutColumnTwo" />
+            </base:SettingsCard.HeaderIcon>
+            <ToggleSwitch IsOn="{x:Bind ViewModel.IsTopNavShown, Mode=TwoWay}" />
+        </base:SettingsCard>
+        <base:SettingsCard Description="{ext:Locale Name=MomentVideoLayoutDensityDescription}" Header="{ext:Locale Name=MomentVideoLayoutDensity}">
+            <base:SettingsCard.HeaderIcon>
+                <ic:SymbolIcon Symbol="Grid" />
+            </base:SettingsCard.HeaderIcon>
+            <ComboBox
+                MinWidth="160"
+                SelectedIndex="{x:Bind ViewModel.MomentVideoLayoutPreset, Mode=TwoWay}">
+                <ComboBoxItem Content="{ext:Locale Name=MomentVideoLayoutDefault}" />
+                <ComboBoxItem Content="{ext:Locale Name=MomentVideoLayoutRelaxed1}" />
+                <ComboBoxItem Content="{ext:Locale Name=MomentVideoLayoutRelaxed2}" />
+                <ComboBoxItem Content="{ext:Locale Name=MomentVideoLayoutRelaxed3}" />
+                <ComboBoxItem Content="{ext:Locale Name=MomentVideoLayoutRelaxed4}" />
+            </ComboBox>
+        </base:SettingsCard>
+    </StackPanel>
 </local:SettingsPageControlBase>

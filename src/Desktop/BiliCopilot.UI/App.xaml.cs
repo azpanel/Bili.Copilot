@@ -40,6 +40,22 @@ public partial class App : Application
     }
 
     /// <summary>
+    /// 应用动态页面的视频排布预设.
+    /// </summary>
+    /// <param name="preset">预设索引.</param>
+    public static void ApplyMomentVideoLayoutPreset(int preset)
+    {
+        double[] itemWidths = [260d, 320d, 400d, 500d, 640d];
+        var safePreset = Math.Clamp(preset, 0, itemWidths.Length - 1);
+        if (Current.Resources["MomentLayout"] is UniformGridLayout layout)
+        {
+            var itemWidth = itemWidths[safePreset];
+            layout.MinItemWidth = itemWidth;
+            layout.MinItemHeight = itemWidth;
+        }
+    }
+
+    /// <summary>
     /// 日志文件夹.
     /// </summary>
     public static string LoggerFolder { get; private set; }
@@ -66,6 +82,7 @@ public partial class App : Application
             instance.Activated += OnInstanceActivated;
             Richasy.WinUIKernel.Share.Base.ImageExBase.EnableBackgroundDecoding = false;
             GlobalDependencies.Initialize();
+            ApplyMomentVideoLayoutPreset(SettingsToolkit.ReadLocalSetting(Models.Constants.SettingNames.MomentVideoLayoutPreset, 0));
             GlobalDependencies.Kernel.GetRequiredService<AppViewModel>().LaunchCommand.Execute(default);
         }
         else

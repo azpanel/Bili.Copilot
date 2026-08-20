@@ -39,6 +39,7 @@ public sealed partial class SettingsPageViewModel : AISettingsViewModelBase
         LogLevel = SettingsToolkit.ReadLocalSetting(SettingNames.MpvLogLevel, MpvLogLevel.Warn);
         HideMainWindowOnPlay = SettingsToolkit.ReadLocalSetting(SettingNames.HideMainWindowOnPlay, true);
         IsTopNavShown = SettingsToolkit.ReadLocalSetting(SettingNames.IsTopNavBarShown, true);
+        MomentVideoLayoutPreset = Math.Clamp(SettingsToolkit.ReadLocalSetting(SettingNames.MomentVideoLayoutPreset, 0), 0, 4);
         IsAutoPlayNextRecommendVideo = SettingsToolkit.ReadLocalSetting(SettingNames.AutoPlayNextRecommendVideo, false);
         PlayNextWithoutTip = SettingsToolkit.ReadLocalSetting(SettingNames.PlayNextWithoutTip, false);
         EndWithPlaylist = SettingsToolkit.ReadLocalSetting(SettingNames.EndWithPlaylist, true);
@@ -479,6 +480,13 @@ public sealed partial class SettingsPageViewModel : AISettingsViewModelBase
     {
         SettingsToolkit.WriteLocalSetting(SettingNames.IsTopNavBarShown, value);
         this.Get<NavigationViewModel>().IsTopNavBarShown = value;
+    }
+
+    partial void OnMomentVideoLayoutPresetChanged(int value)
+    {
+        var safeValue = Math.Clamp(value, 0, 4);
+        SettingsToolkit.WriteLocalSetting(SettingNames.MomentVideoLayoutPreset, safeValue);
+        App.ApplyMomentVideoLayoutPreset(safeValue);
     }
 
     partial void OnMTCBehaviorChanged(MTCBehavior value)

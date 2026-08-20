@@ -3186,4 +3186,25 @@
   <data name="MaxBackCacheSize" xml:space="preserve">
     <value>最大后向缓冲大小（MB）</value>
   </data>
+  <data name="MomentVideoLayoutDensity" xml:space="preserve">
+    <value>动态页面视频排布紧凑程度</value>
+  </data>
+  <data name="MomentVideoLayoutDensityDescription" xml:space="preserve">
+    <value>调整视频卡片的最小宽度；越宽松，同一行显示的视频越少</value>
+  </data>
+  <data name="MomentVideoLayoutDefault" xml:space="preserve">
+    <value>默认（最紧凑）</value>
+  </data>
+  <data name="MomentVideoLayoutRelaxed1" xml:space="preserve">
+    <value>宽松</value>
+  </data>
+  <data name="MomentVideoLayoutRelaxed2" xml:space="preserve">
+    <value>更宽松</value>
+  </data>
+  <data name="MomentVideoLayoutRelaxed3" xml:space="preserve">
+    <value>舒展</value>
+  </data>
+  <data name="MomentVideoLayoutRelaxed4" xml:space="preserve">
+    <value>最舒展</value>
+  </data>
 </root>

@@ -29,6 +29,9 @@ public sealed partial class SettingsPageViewModel
     private bool _isTopNavShown;
 
     [ObservableProperty]
+    private int _momentVideoLayoutPreset;
+
+    [ObservableProperty]
     private bool _isAutoPlayNextRecommendVideo;
 
     [ObservableProperty]
