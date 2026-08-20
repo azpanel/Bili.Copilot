@@ -54,6 +54,8 @@ public sealed partial class ArticleCardControl : LayoutControlBase<ArticleItemVi
         {
             _rootCard.Command = newValue?.OpenReaderCommand;
         }
+
+        RelocateCommands();
     }
 
     private static MenuFlyoutItem CreateOpenInBroswerItem()
@@ -101,11 +103,14 @@ public sealed partial class ArticleCardControl : LayoutControlBase<ArticleItemVi
         if (ContextFlyout is null)
         {
             CreateContextFlyout();
+            RelocateCommands();
             args.TryGetPosition(this, out var point);
             ContextFlyout.ShowAt(this, new Microsoft.UI.Xaml.Controls.Primitives.FlyoutShowOptions { Position = point });
         }
-
-        RelocateCommands();
+        else
+        {
+            RelocateCommands();
+        }
         args.Handled = true;
     }
 
@@ -125,7 +130,7 @@ public sealed partial class ArticleCardControl : LayoutControlBase<ArticleItemVi
 
     private void RelocateCommands()
     {
-        if (ContextFlyout is not MenuFlyout flyout)
+        if (ViewModel is null || ContextFlyout is not MenuFlyout flyout)
         {
             return;
         }

@@ -48,6 +48,7 @@ public sealed partial class EpisodeCardControl : LayoutControlBase<EpisodeItemVi
     protected override void OnViewModelChanged(EpisodeItemViewModel? oldValue, EpisodeItemViewModel? newValue)
     {
         _rootCard?.Command = newValue?.PlayCommand;
+        RelocateCommands();
     }
 
     private static MenuFlyoutItem CreateOpenInBroswerItem()
@@ -75,11 +76,14 @@ public sealed partial class EpisodeCardControl : LayoutControlBase<EpisodeItemVi
         if (ContextFlyout is null)
         {
             CreateContextFlyout();
+            RelocateCommands();
             args.TryGetPosition(this, out var point);
             ContextFlyout.ShowAt(this, new Microsoft.UI.Xaml.Controls.Primitives.FlyoutShowOptions { Position = point });
         }
-
-        RelocateCommands();
+        else
+        {
+            RelocateCommands();
+        }
         args.Handled = true;
     }
 
@@ -93,7 +97,7 @@ public sealed partial class EpisodeCardControl : LayoutControlBase<EpisodeItemVi
 
     private void RelocateCommands()
     {
-        if (ContextFlyout is not MenuFlyout flyout)
+        if (ViewModel is null || ContextFlyout is not MenuFlyout flyout)
         {
             return;
         }

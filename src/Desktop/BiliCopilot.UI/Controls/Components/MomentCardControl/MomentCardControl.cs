@@ -53,6 +53,8 @@ public sealed partial class MomentCardControl : LayoutControlBase<MomentItemView
         {
             _rootCard.Command = newValue?.ActivateCommand;
         }
+
+        RelocateCommands();
     }
 
     private static MenuFlyoutItem CreatePrivatePlayItem()
@@ -120,11 +122,14 @@ public sealed partial class MomentCardControl : LayoutControlBase<MomentItemView
         if (ContextFlyout is null)
         {
             CreateContextFlyout();
+            RelocateCommands();
             args.TryGetPosition(this, out var point);
             ContextFlyout.ShowAt(this, new Microsoft.UI.Xaml.Controls.Primitives.FlyoutShowOptions { Position = point });
         }
-
-        RelocateCommands();
+        else
+        {
+            RelocateCommands();
+        }
         args.Handled = true;
     }
 
@@ -150,7 +155,7 @@ public sealed partial class MomentCardControl : LayoutControlBase<MomentItemView
 
     private void RelocateCommands()
     {
-        if (ContextFlyout is not MenuFlyout flyout)
+        if (ViewModel is null || ContextFlyout is not MenuFlyout flyout)
         {
             return;
         }
