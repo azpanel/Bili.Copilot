@@ -39,31 +39,48 @@ public sealed partial class LivePartitionDetailViewModel : ViewModelBase<Partiti
         try
         {
             var (lives, tags, nextPageNumber) = await _service.GetPartitionLiveListAsync(Data.Data);
-            if (tags is not null)
+            if (tags is null || tags.Count == 0)
             {
-                Children = [.. tags];
+                _logger.LogWarning("{PartitionName} 分区未返回任何直播标签.", Data.Data.Name);
+                return;
             }
 
+            Children = [.. tags];
             TryAddRooms(lives);
-            CurrentTag = tags.First();
-            _childPartitionOffsetCache[tags.First()] = nextPageNumber;
+            CurrentTag = tags[0];
+            _childPartitionOffsetCache[CurrentTag] = nextPageNumber;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, $"尝试加载 {Data.Data.Name} 分区视频时出错.");
         }
 
-        IsLiveLoading = false;
-        Initialized?.Invoke(this, EventArgs.Empty);
+        finally
+        {
+            IsLiveLoading = false;
+            Initialized?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     [RelayCommand]
     private void Refresh()
     {
+        if (CurrentTag is null)
+        {
+            return;
+        }
+
         _childPartitionRoomCache.Remove(CurrentTag);
         _childPartitionOffsetCache.Remove(CurrentTag);
+        _loadVersion++;
+        var refreshVersion = _loadVersion;
         this.Get<DispatcherQueue>().TryEnqueue(DispatcherQueuePriority.Low, async () =>
         {
+            if (refreshVersion != _loadVersion)
+            {
+                return;
+            }
+
             Rooms.Clear();
             _preventLoadMore = false;
             await LoadRoomsAsync();
@@ -79,16 +96,23 @@ public sealed partial class LivePartitionDetailViewModel : ViewModelBase<Partiti
         }
 
         _preventLoadMore = false;
-        if (Rooms.Count > 0)
+        if (Rooms.Count > 0 && CurrentTag is not null)
         {
             _childPartitionRoomCache[CurrentTag] = Rooms.ToList();
         }
 
+        _loadVersion++;
         CurrentTag = tag;
+        var selectionVersion = _loadVersion;
         this.Get<DispatcherQueue>().TryEnqueue(DispatcherQueuePriority.Low, async () =>
         {
+            if (selectionVersion != _loadVersion || !Equals(tag, CurrentTag))
+            {
+                return;
+            }
+
             Rooms.Clear();
-            if (_childPartitionRoomCache.TryGetValue(CurrentTag, out var cache))
+            if (_childPartitionRoomCache.TryGetValue(tag, out var cache))
             {
                 foreach (var item in cache)
                 {
@@ -110,40 +134,62 @@ public sealed partial class LivePartitionDetailViewModel : ViewModelBase<Partiti
     [RelayCommand]
     private async Task LoadRoomsAsync()
     {
-        if (IsLiveLoading)
+        var requestedTag = CurrentTag;
+        if (requestedTag is null || _preventLoadMore)
         {
             return;
         }
 
+        var requestedVersion = _loadVersion;
+        var hasNewRooms = false;
+        _activeLoadCount++;
         IsLiveLoading = true;
-        await LoadChildPartitionRoomsAsync();
-        IsLiveLoading = false;
-        LiveListUpdated?.Invoke(this, EventArgs.Empty);
+        try
+        {
+            hasNewRooms = await LoadChildPartitionRoomsAsync(requestedTag, requestedVersion);
+        }
+        finally
+        {
+            _activeLoadCount--;
+            IsLiveLoading = _activeLoadCount > 0;
+        }
+
+        if (hasNewRooms)
+        {
+            LiveListUpdated?.Invoke(this, EventArgs.Empty);
+        }
     }
 
-    private async Task LoadChildPartitionRoomsAsync()
+    private async Task<bool> LoadChildPartitionRoomsAsync(LiveTag tag, int loadVersion)
     {
-        if (_preventLoadMore)
-        {
-            return;
-        }
-
         try
         {
             var pn = 0;
-            if (_childPartitionOffsetCache.TryGetValue(CurrentTag, out var cachePN))
+            if (_childPartitionOffsetCache.TryGetValue(tag, out var cachePN))
             {
                 pn = cachePN;
             }
 
-            var (rooms, _, nextPn) = await _service.GetPartitionLiveListAsync(Data.Data, CurrentTag, pn);
-            _childPartitionOffsetCache[CurrentTag] = nextPn;
+            var (rooms, _, nextPn) = await _service.GetPartitionLiveListAsync(Data.Data, tag, pn);
+            if (loadVersion != _loadVersion || !Equals(tag, CurrentTag))
+            {
+                return false;
+            }
+
+            _childPartitionOffsetCache[tag] = nextPn;
+            _preventLoadMore = rooms is null || rooms.Count == 0 || nextPn <= pn;
             TryAddRooms(rooms);
+            return rooms?.Count > 0;
         }
         catch (Exception ex)
         {
-            _preventLoadMore = true;
-            _logger.LogError(ex, $"尝试加载 {Data.Data.Name}/{CurrentTag.Name} 分区视频时出错.");
+            if (loadVersion == _loadVersion && Equals(tag, CurrentTag))
+            {
+                _preventLoadMore = true;
+            }
+
+            _logger.LogError(ex, "尝试加载 {PartitionName}/{TagName} 分区视频时出错.", Data.Data.Name, tag.Name ?? "<未命名>");
+            return false;
         }
     }
 

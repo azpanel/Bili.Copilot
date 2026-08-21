@@ -20,6 +20,8 @@ public sealed partial class LivePartitionDetailViewModel
     private readonly Dictionary<LiveTag, int> _childPartitionOffsetCache = new();
 
     private bool _preventLoadMore;
+    private int _loadVersion;
+    private int _activeLoadCount;
 
     [ObservableProperty]
     private List<LiveTag>? _children;
@@ -28,7 +30,7 @@ public sealed partial class LivePartitionDetailViewModel
     private bool _isLiveLoading;
 
     [ObservableProperty]
-    private LiveTag _currentTag;
+    private LiveTag? _currentTag;
 
     /// <summary>
     /// 初始化完成.
