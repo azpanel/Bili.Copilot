@@ -99,6 +99,20 @@
             FontSize="13"
             MaxLines="1"
             Text="{x:Bind ViewModel.VideoTitle, Mode=OneWay}" />
-        <local:MomentItemOperationPanel Grid.Row="3" ViewModel="{x:Bind ViewModel, Mode=OneWay}" />
+        <Grid Grid.Row="3" ColumnSpacing="6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <local:MomentItemOperationPanel ViewModel="{x:Bind ViewModel, Mode=OneWay}" />
+            <Button
+                Grid.Column="1"
+                AutomationProperties.Name="{ext:Locale Name=OpenInBrowser}"
+                Command="{x:Bind ViewModel.OpenInBroswerCommand, Mode=OneWay}"
+                Style="{StaticResource SmallIconButtonStyle}"
+                ToolTipService.ToolTip="{ext:Locale Name=OpenInBrowser}">
+                <ic:SymbolIcon FontSize="14" Symbol="Globe" />
+            </Button>
+        </Grid>
     </Grid>
 </local:MomentCardPresenter>
