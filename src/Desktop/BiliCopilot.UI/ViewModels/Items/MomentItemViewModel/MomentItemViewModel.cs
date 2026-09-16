@@ -29,10 +29,15 @@ public sealed partial class MomentItemViewModel : ViewModelBase<MomentInformatio
     /// <summary>
     /// Initializes a new instance of the <see cref="MomentItemViewModel"/> class.
     /// </summary>
-    public MomentItemViewModel(MomentInformation data, MomentCardStyle style, Action<MomentItemViewModel> showCommentAction)
+    public MomentItemViewModel(
+        MomentInformation data,
+        MomentCardStyle style,
+        Action<MomentItemViewModel> showCommentAction,
+        Action<MomentItemViewModel>? openedAction = default)
         : base(data)
     {
         _showMomentAction = showCommentAction;
+        _openedAction = openedAction;
         _operationService = this.Get<IMomentOperationService>();
         _logger = this.Get<ILogger<MomentItemViewModel>>();
         IsLiked = data.CommunityInformation?.IsLiked ?? false;
@@ -113,6 +118,7 @@ public sealed partial class MomentItemViewModel : ViewModelBase<MomentInformatio
     {
         if (FindInnerContent<VideoInformation>() is VideoInformation vinfo)
         {
+            _openedAction?.Invoke(this);
             var snapshot = new MediaSnapshot(vinfo);
             this.Get<AppViewModel>().OpenPlayerCommand.Execute(snapshot);
         }
@@ -121,6 +127,7 @@ public sealed partial class MomentItemViewModel : ViewModelBase<MomentInformatio
             var hasEpid = einfo.Identifier.Id != "0";
             if (hasEpid)
             {
+                _openedAction?.Invoke(this);
                 var identifier = new MediaIdentifier(einfo.Identifier.Id, string.Empty, default);
                 var snapshot = new MediaSnapshot(default, new EpisodeInformation(identifier));
                 this.Get<AppViewModel>().OpenPlayerCommand.Execute(snapshot);
@@ -154,6 +161,7 @@ public sealed partial class MomentItemViewModel : ViewModelBase<MomentInformatio
             return;
         }
 
+        _openedAction?.Invoke(this);
         var snapshot = new MediaSnapshot(vinfo, true);
         this.Get<AppViewModel>().OpenPlayerCommand.Execute(snapshot);
     }
@@ -193,6 +201,7 @@ public sealed partial class MomentItemViewModel : ViewModelBase<MomentInformatio
     [RelayCommand]
     private async Task OpenInBroswerAsync()
     {
+        _openedAction?.Invoke(this);
         var url = GetMediaUrl() ?? $"https://t.bilibili.com/{Data.Id}";
         await Launcher.LaunchUriAsync(new Uri(url));
     }

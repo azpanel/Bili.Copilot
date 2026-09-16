@@ -32,6 +32,12 @@ public sealed partial class SettingsPageViewModel
     private int _momentVideoLayoutPreset;
 
     [ObservableProperty]
+    private MomentVideoOpenedMarkStyle _momentVideoOpenedMarkStyle;
+
+    [ObservableProperty]
+    private List<MomentVideoOpenedMarkStyle> _momentVideoOpenedMarkStyleCollection;
+
+    [ObservableProperty]
     private bool _isAutoPlayNextRecommendVideo;
 
     [ObservableProperty]

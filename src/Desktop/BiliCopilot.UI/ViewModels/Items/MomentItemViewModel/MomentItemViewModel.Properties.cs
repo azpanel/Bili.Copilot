@@ -16,6 +16,7 @@ public sealed partial class MomentItemViewModel
     private readonly IMomentOperationService _operationService;
     private readonly ILogger<MomentItemViewModel> _logger;
     private readonly Action<MomentItemViewModel> _showMomentAction;
+    private readonly Action<MomentItemViewModel>? _openedAction;
 
     [ObservableProperty]
     private double? _likeCount;
@@ -28,6 +29,12 @@ public sealed partial class MomentItemViewModel
 
     [ObservableProperty]
     private bool _isPgc;
+
+    [ObservableProperty]
+    private bool _isLastOpened;
+
+    [ObservableProperty]
+    private MomentVideoOpenedMarkStyle _openedMarkStyle;
 
     /// <summary>
     /// 作者.
@@ -78,4 +85,38 @@ public sealed partial class MomentItemViewModel
     /// 卡片样式.
     /// </summary>
     public MomentCardStyle Style { get; init; }
+
+    /// <summary>
+    /// 是否显示强调色边框标记.
+    /// </summary>
+    public bool IsOpenedBorderVisible => IsLastOpened && OpenedMarkStyle == MomentVideoOpenedMarkStyle.AccentBorder;
+
+    /// <summary>
+    /// 是否显示上次打开角标.
+    /// </summary>
+    public bool IsOpenedBadgeVisible => IsLastOpened && OpenedMarkStyle == MomentVideoOpenedMarkStyle.Badge;
+
+    /// <summary>
+    /// 是否显示流动彩虹边框标记.
+    /// </summary>
+    public bool IsOpenedRainbowBorderVisible => IsLastOpened && OpenedMarkStyle == MomentVideoOpenedMarkStyle.RainbowBorder;
+
+    /// <summary>
+    /// 卡片不透明度.
+    /// </summary>
+    public double OpenedCardOpacity => IsLastOpened && OpenedMarkStyle == MomentVideoOpenedMarkStyle.Dimmed ? 0.65d : 1d;
+
+    partial void OnIsLastOpenedChanged(bool value)
+        => NotifyOpenedAppearanceChanged();
+
+    partial void OnOpenedMarkStyleChanged(MomentVideoOpenedMarkStyle value)
+        => NotifyOpenedAppearanceChanged();
+
+    private void NotifyOpenedAppearanceChanged()
+    {
+        OnPropertyChanged(nameof(IsOpenedBorderVisible));
+        OnPropertyChanged(nameof(IsOpenedBadgeVisible));
+        OnPropertyChanged(nameof(IsOpenedRainbowBorderVisible));
+        OnPropertyChanged(nameof(OpenedCardOpacity));
+    }
 }

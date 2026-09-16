@@ -19,6 +19,8 @@ public sealed partial class PopularPageViewModel
 
     private long _recommendOffset;
     private long _hotOffset;
+    private string _lastOpenedVideoId;
+    private Models.Constants.MomentVideoOpenedMarkStyle _openedMarkStyle;
 
     [ObservableProperty]
     private bool _isPartitionLoading;

@@ -73,4 +73,10 @@ public sealed partial class MomentPageViewModel : ViewModelBase
         CommentModule.Initialize(data.CommentId, data.CommentType!.Value, Richasy.BiliKernel.Models.CommentSortType.Hot);
         CommentModule.RefreshCommand.Execute(default);
     }
+
+    /// <summary>
+    /// 更新动态视频最近打开标记样式.
+    /// </summary>
+    public void SetVideoOpenedMarkStyle(Models.Constants.MomentVideoOpenedMarkStyle style)
+        => Sections?.OfType<VideoMomentSectionDetailViewModel>().FirstOrDefault()?.SetOpenedMarkStyle(style);
 }

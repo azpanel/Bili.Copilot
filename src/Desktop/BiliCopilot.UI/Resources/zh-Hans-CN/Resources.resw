@@ -3207,4 +3207,28 @@
   <data name="MomentVideoLayoutRelaxed4" xml:space="preserve">
     <value>最舒展</value>
   </data>
+  <data name="MomentVideoOpenedMark" xml:space="preserve">
+    <value>动态视频打开标记</value>
+  </data>
+  <data name="MomentVideoOpenedMarkDescription" xml:space="preserve">
+    <value>标记动态页面中最近打开的视频卡片，方便返回后找到上次位置</value>
+  </data>
+  <data name="MomentVideoOpenedMarkNone" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="MomentVideoOpenedMarkBorder" xml:space="preserve">
+    <value>强调色边框</value>
+  </data>
+  <data name="MomentVideoOpenedMarkBadge" xml:space="preserve">
+    <value>上次打开角标</value>
+  </data>
+  <data name="MomentVideoOpenedMarkDimmed" xml:space="preserve">
+    <value>整体变暗</value>
+  </data>
+  <data name="MomentVideoOpenedMarkRainbow" xml:space="preserve">
+    <value>流动彩虹边框</value>
+  </data>
+  <data name="LastOpened" xml:space="preserve">
+    <value>上次打开</value>
+  </data>
 </root>

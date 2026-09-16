@@ -28,6 +28,7 @@ public sealed partial class VideoItemViewModel : ViewModelBase<VideoInformation>
     private readonly Action<VideoItemViewModel>? _removeAction;
     private readonly VideoFavoriteFolder? _favFolder;
     private readonly Action<VideoItemViewModel>? _playAction;
+    private readonly Action<VideoItemViewModel>? _openedAction;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VideoItemViewModel"/> class.
@@ -37,12 +38,14 @@ public sealed partial class VideoItemViewModel : ViewModelBase<VideoInformation>
         VideoCardStyle style,
         Action<VideoItemViewModel> removeAction = default,
         VideoFavoriteFolder? favFolder = default,
-        Action<VideoItemViewModel>? playAction = default)
+        Action<VideoItemViewModel>? playAction = default,
+        Action<VideoItemViewModel>? openedAction = default)
         : base(info)
     {
         _removeAction = removeAction;
         _favFolder = favFolder;
         _playAction = playAction;
+        _openedAction = openedAction;
         var primaryLan = ApplicationLanguages.Languages[0];
         Style = style;
         Title = info.Identifier.Title;
@@ -69,6 +72,7 @@ public sealed partial class VideoItemViewModel : ViewModelBase<VideoInformation>
     [RelayCommand]
     private void Play()
     {
+        _openedAction?.Invoke(this);
         if (_playAction is not null)
         {
             _playAction(this);
@@ -81,6 +85,7 @@ public sealed partial class VideoItemViewModel : ViewModelBase<VideoInformation>
     [RelayCommand]
     private void PlayInPrivate()
     {
+        _openedAction?.Invoke(this);
         if (_playAction is not null)
         {
             _playAction(this);
@@ -161,7 +166,10 @@ public sealed partial class VideoItemViewModel : ViewModelBase<VideoInformation>
 
     [RelayCommand]
     private async Task OpenInBroswerAsync()
-        => await Windows.System.Launcher.LaunchUriAsync(GetWebUri()).AsTask();
+    {
+        _openedAction?.Invoke(this);
+        await Windows.System.Launcher.LaunchUriAsync(GetWebUri()).AsTask();
+    }
 
     [RelayCommand]
     private void CopyUri()

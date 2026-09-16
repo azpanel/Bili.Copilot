@@ -92,4 +92,44 @@ public sealed partial class VideoItemViewModel
 
     [ObservableProperty]
     public partial bool IsSelected { get; set; }
+
+    [ObservableProperty]
+    private bool _isLastOpened;
+
+    [ObservableProperty]
+    private MomentVideoOpenedMarkStyle _openedMarkStyle;
+
+    /// <summary>
+    /// 是否显示强调色边框标记.
+    /// </summary>
+    public bool IsOpenedBorderVisible => IsLastOpened && OpenedMarkStyle == MomentVideoOpenedMarkStyle.AccentBorder;
+
+    /// <summary>
+    /// 是否显示上次打开角标.
+    /// </summary>
+    public bool IsOpenedBadgeVisible => IsLastOpened && OpenedMarkStyle == MomentVideoOpenedMarkStyle.Badge;
+
+    /// <summary>
+    /// 是否显示流动彩虹边框标记.
+    /// </summary>
+    public bool IsOpenedRainbowBorderVisible => IsLastOpened && OpenedMarkStyle == MomentVideoOpenedMarkStyle.RainbowBorder;
+
+    /// <summary>
+    /// 卡片不透明度.
+    /// </summary>
+    public double OpenedCardOpacity => IsLastOpened && OpenedMarkStyle == MomentVideoOpenedMarkStyle.Dimmed ? 0.65d : 1d;
+
+    partial void OnIsLastOpenedChanged(bool value)
+        => NotifyOpenedAppearanceChanged();
+
+    partial void OnOpenedMarkStyleChanged(MomentVideoOpenedMarkStyle value)
+        => NotifyOpenedAppearanceChanged();
+
+    private void NotifyOpenedAppearanceChanged()
+    {
+        OnPropertyChanged(nameof(IsOpenedBorderVisible));
+        OnPropertyChanged(nameof(IsOpenedBadgeVisible));
+        OnPropertyChanged(nameof(IsOpenedRainbowBorderVisible));
+        OnPropertyChanged(nameof(OpenedCardOpacity));
+    }
 }

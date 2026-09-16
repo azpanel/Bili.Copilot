@@ -12,9 +12,22 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:MomentCardControl">
-                    <base:CardControl x:Name="RootCard">
-                        <local:VideoMomentPresenter ViewModel="{TemplateBinding ViewModel}" />
-                    </base:CardControl>
+                    <Grid Opacity="{Binding RelativeSource={RelativeSource Mode=TemplatedParent}, Path=ViewModel.OpenedCardOpacity}">
+                        <base:CardControl x:Name="RootCard">
+                            <local:VideoMomentPresenter ViewModel="{TemplateBinding ViewModel}" />
+                        </base:CardControl>
+                        <Border
+                            IsHitTestVisible="False"
+                            BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+                            BorderThickness="2"
+                            CornerRadius="{StaticResource ControlCornerRadius}"
+                            Visibility="{Binding RelativeSource={RelativeSource Mode=TemplatedParent}, Path=ViewModel.IsOpenedBorderVisible}" />
+                        <local:AnimatedRainbowBorder
+                            IsActive="{Binding RelativeSource={RelativeSource Mode=TemplatedParent}, Path=ViewModel.IsOpenedRainbowBorderVisible}"
+                            BorderThickness="2"
+                            CornerRadius="{StaticResource ControlCornerRadius}"
+                            Visibility="{Binding RelativeSource={RelativeSource Mode=TemplatedParent}, Path=ViewModel.IsOpenedRainbowBorderVisible}" />
+                    </Grid>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

@@ -97,7 +97,11 @@ public sealed partial class PopularPageViewModel
         {
             foreach (var item in videos)
             {
-                Videos.Add(new VideoItemViewModel(item, style));
+                Videos.Add(new VideoItemViewModel(item, style, openedAction: MarkVideoOpened)
+                {
+                    IsLastOpened = item.Identifier.Id == _lastOpenedVideoId,
+                    OpenedMarkStyle = _openedMarkStyle,
+                });
             }
         }
     }

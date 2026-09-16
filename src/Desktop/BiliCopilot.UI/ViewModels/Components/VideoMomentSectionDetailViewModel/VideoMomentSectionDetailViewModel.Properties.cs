@@ -20,6 +20,8 @@ public sealed partial class VideoMomentSectionDetailViewModel
     private bool _preventLoadMore;
     private string? _offset;
     private string? _baseline;
+    private string? _lastOpenedMomentId;
+    private MomentVideoOpenedMarkStyle _openedMarkStyle;
 
     [ObservableProperty]
     private bool _isEmpty;

@@ -24,6 +24,10 @@ public sealed partial class VideoMomentSectionDetailViewModel : ViewModelBase, I
     {
         _service = service;
         _logger = this.Get<ILogger<VideoMomentSectionDetailViewModel>>();
+        _lastOpenedMomentId = SettingsToolkit.ReadLocalSetting(Models.Constants.SettingNames.LastOpenedMomentVideoId, string.Empty);
+        _openedMarkStyle = SettingsToolkit.ReadLocalSetting(
+            Models.Constants.SettingNames.MomentVideoOpenedMarkStyle,
+            Models.Constants.MomentVideoOpenedMarkStyle.AccentBorder);
     }
 
     [RelayCommand]
@@ -70,7 +74,7 @@ public sealed partial class VideoMomentSectionDetailViewModel : ViewModelBase, I
                 _offset = view.Offset;
                 _baseline = view.UpdateBaseline;
                 _preventLoadMore = view.HasMoreMoments != true;
-                foreach (var item in view.Moments.Select(p => new MomentItemViewModel(p, Models.Constants.MomentCardStyle.Video, ShowComment)))
+                foreach (var item in view.Moments.Select(p => CreateItem(p)))
                 {
                     Items.Add(item);
                 }
@@ -92,6 +96,37 @@ public sealed partial class VideoMomentSectionDetailViewModel : ViewModelBase, I
 
     private void ShowComment(MomentItemViewModel item)
         => this.Get<MomentPageViewModel>().ShowCommentCommand.Execute(item.Data);
+
+    /// <summary>
+    /// 更新最近打开标记的显示样式.
+    /// </summary>
+    public void SetOpenedMarkStyle(Models.Constants.MomentVideoOpenedMarkStyle style)
+    {
+        _openedMarkStyle = style;
+        foreach (var item in Items)
+        {
+            item.OpenedMarkStyle = style;
+        }
+    }
+
+    private MomentItemViewModel CreateItem(Richasy.BiliKernel.Models.Moment.MomentInformation data)
+    {
+        return new MomentItemViewModel(data, Models.Constants.MomentCardStyle.Video, ShowComment, MarkOpened)
+        {
+            IsLastOpened = data.Id == _lastOpenedMomentId,
+            OpenedMarkStyle = _openedMarkStyle,
+        };
+    }
+
+    private void MarkOpened(MomentItemViewModel openedItem)
+    {
+        _lastOpenedMomentId = openedItem.Data.Id;
+        SettingsToolkit.WriteLocalSetting(Models.Constants.SettingNames.LastOpenedMomentVideoId, _lastOpenedMomentId);
+        foreach (var item in Items)
+        {
+            item.IsLastOpened = ReferenceEquals(item, openedItem);
+        }
+    }
 
     private void SaveLastTenMomentIds()
     {

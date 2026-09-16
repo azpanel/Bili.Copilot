@@ -9,6 +9,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:ext="using:BiliCopilot.UI.Extensions"
     xmlns:items="using:BiliCopilot.UI.ViewModels.Items"
+    xmlns:ic="using:FluentIcons.WinUI"
     xmlns:local="using:BiliCopilot.UI.Controls.Popular"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:repeater="using:Richasy.WinUIKernel.Share.Base.Repeater"
@@ -29,6 +30,39 @@
             HotTemplate="{StaticResource HotStyle}"
             RankTemplate="{StaticResource RankStyle}"
             RecommendTemplate="{StaticResource RecommendStyle}" />
+        <DataTemplate x:Key="PopularVideoTemplate" x:DataType="items:VideoItemViewModel">
+            <Grid Opacity="{x:Bind OpenedCardOpacity, Mode=OneWay}">
+                <ContentControl
+                    Content="{x:Bind}"
+                    ContentTemplateSelector="{StaticResource CardSelector}"
+                    Style="{StaticResource AppContentControlStyle}" />
+                <Border
+                    IsHitTestVisible="False"
+                    BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+                    BorderThickness="2"
+                    CornerRadius="{StaticResource ControlCornerRadius}"
+                    Visibility="{x:Bind IsOpenedBorderVisible, Mode=OneWay}" />
+                <components:AnimatedRainbowBorder
+                    IsActive="{x:Bind IsOpenedRainbowBorderVisible, Mode=OneWay}"
+                    BorderThickness="2"
+                    CornerRadius="{StaticResource ControlCornerRadius}"
+                    Visibility="{x:Bind IsOpenedRainbowBorderVisible, Mode=OneWay}" />
+                <Border
+                    Margin="8"
+                    Padding="7,3"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    IsHitTestVisible="False"
+                    Background="{ThemeResource AccentFillColorDefaultBrush}"
+                    CornerRadius="{StaticResource ControlCornerRadius}"
+                    Visibility="{x:Bind IsOpenedBadgeVisible, Mode=OneWay}">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <ic:SymbolIcon FontSize="12" Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" Symbol="Checkmark" />
+                        <TextBlock Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" Text="{ext:Locale Name=LastOpened}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </DataTemplate>
     </UserControl.Resources>
 
     <Grid>
@@ -38,15 +72,8 @@
                     <repeater:AppRepeater
                         x:Name="VideoRepeater"
                         ItemsSource="{x:Bind ViewModel.Videos}"
+                        ItemTemplate="{StaticResource PopularVideoTemplate}"
                         Layout="{StaticResource VideoLayout}">
-                        <repeater:AppRepeater.ItemTemplate>
-                            <DataTemplate x:DataType="items:VideoItemViewModel">
-                                <ContentControl
-                                    Content="{x:Bind}"
-                                    ContentTemplateSelector="{StaticResource CardSelector}"
-                                    Style="{StaticResource AppContentControlStyle}" />
-                            </DataTemplate>
-                        </repeater:AppRepeater.ItemTemplate>
                     </repeater:AppRepeater>
                 </Grid>
             </controls:IncrementVerticalScrollControl.Element>

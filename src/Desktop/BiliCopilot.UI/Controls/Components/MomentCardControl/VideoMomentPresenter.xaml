@@ -114,5 +114,26 @@
                 <ic:SymbolIcon FontSize="14" Symbol="Globe" />
             </Button>
         </Grid>
+        <Border
+            Grid.RowSpan="4"
+            Margin="8"
+            Padding="7,3"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Top"
+            IsHitTestVisible="False"
+            Background="{ThemeResource AccentFillColorDefaultBrush}"
+            CornerRadius="{StaticResource ControlCornerRadius}"
+            Visibility="{x:Bind ViewModel.IsOpenedBadgeVisible, Mode=OneWay}">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <ic:SymbolIcon
+                    FontSize="12"
+                    Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                    Symbol="Checkmark" />
+                <TextBlock
+                    Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="{ext:Locale Name=LastOpened}" />
+            </StackPanel>
+        </Border>
     </Grid>
 </local:MomentCardPresenter>

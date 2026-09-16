@@ -40,6 +40,10 @@ public sealed partial class SettingsPageViewModel : AISettingsViewModelBase
         HideMainWindowOnPlay = SettingsToolkit.ReadLocalSetting(SettingNames.HideMainWindowOnPlay, true);
         IsTopNavShown = SettingsToolkit.ReadLocalSetting(SettingNames.IsTopNavBarShown, true);
         MomentVideoLayoutPreset = Math.Clamp(SettingsToolkit.ReadLocalSetting(SettingNames.MomentVideoLayoutPreset, 0), 0, 4);
+        MomentVideoOpenedMarkStyleCollection = Enum.GetValues<MomentVideoOpenedMarkStyle>().ToList();
+        MomentVideoOpenedMarkStyle = SettingsToolkit.ReadLocalSetting(
+            SettingNames.MomentVideoOpenedMarkStyle,
+            Models.Constants.MomentVideoOpenedMarkStyle.AccentBorder);
         IsAutoPlayNextRecommendVideo = SettingsToolkit.ReadLocalSetting(SettingNames.AutoPlayNextRecommendVideo, false);
         PlayNextWithoutTip = SettingsToolkit.ReadLocalSetting(SettingNames.PlayNextWithoutTip, false);
         EndWithPlaylist = SettingsToolkit.ReadLocalSetting(SettingNames.EndWithPlaylist, true);
@@ -487,6 +491,13 @@ public sealed partial class SettingsPageViewModel : AISettingsViewModelBase
         var safeValue = Math.Clamp(value, 0, 4);
         SettingsToolkit.WriteLocalSetting(SettingNames.MomentVideoLayoutPreset, safeValue);
         App.ApplyMomentVideoLayoutPreset(safeValue);
+    }
+
+    partial void OnMomentVideoOpenedMarkStyleChanged(MomentVideoOpenedMarkStyle value)
+    {
+        SettingsToolkit.WriteLocalSetting(SettingNames.MomentVideoOpenedMarkStyle, value);
+        this.Get<MomentPageViewModel>().SetVideoOpenedMarkStyle(value);
+        this.Get<PopularPageViewModel>().SetVideoOpenedMarkStyle(value);
     }
 
     partial void OnMTCBehaviorChanged(MTCBehavior value)

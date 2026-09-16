@@ -27,6 +27,42 @@ public sealed partial class PopularPageViewModel : LayoutPageViewModelBase
     {
         _service = discoveryService;
         _logger = logger;
+        _lastOpenedVideoId = SettingsToolkit.ReadLocalSetting(SettingNames.LastOpenedPopularVideoId, string.Empty);
+        _openedMarkStyle = SettingsToolkit.ReadLocalSetting(
+            SettingNames.MomentVideoOpenedMarkStyle,
+            MomentVideoOpenedMarkStyle.AccentBorder);
+    }
+
+    /// <summary>
+    /// 更新最近打开标记样式.
+    /// </summary>
+    public void SetVideoOpenedMarkStyle(MomentVideoOpenedMarkStyle style)
+    {
+        _openedMarkStyle = style;
+        foreach (var item in Videos)
+        {
+            item.OpenedMarkStyle = style;
+        }
+
+        foreach (var item in _videoCache.Values.SelectMany(p => p))
+        {
+            item.OpenedMarkStyle = style;
+        }
+    }
+
+    private void MarkVideoOpened(VideoItemViewModel openedItem)
+    {
+        _lastOpenedVideoId = openedItem.Data.Identifier.Id;
+        SettingsToolkit.WriteLocalSetting(SettingNames.LastOpenedPopularVideoId, _lastOpenedVideoId);
+        foreach (var item in Videos)
+        {
+            item.IsLastOpened = ReferenceEquals(item, openedItem);
+        }
+
+        foreach (var item in _videoCache.Values.SelectMany(p => p))
+        {
+            item.IsLastOpened = item.Data.Identifier.Id == _lastOpenedVideoId;
+        }
     }
 
     /// <inheritdoc/>

@@ -141,4 +141,7 @@ public enum SettingNames
     VulkanDeviceName,
     MaxBackCacheSize,
     MomentVideoLayoutPreset,
+    LastOpenedMomentVideoId,
+    LastOpenedPopularVideoId,
+    MomentVideoOpenedMarkStyle,
 }
