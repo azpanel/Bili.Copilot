@@ -73,7 +73,7 @@
                         x:Name="VideoRepeater"
                         ItemsSource="{x:Bind ViewModel.Videos}"
                         ItemTemplate="{StaticResource PopularVideoTemplate}"
-                        Layout="{StaticResource VideoLayout}">
+                        Layout="{StaticResource MomentLayout}">
                     </repeater:AppRepeater>
                 </Grid>
             </controls:IncrementVerticalScrollControl.Element>
