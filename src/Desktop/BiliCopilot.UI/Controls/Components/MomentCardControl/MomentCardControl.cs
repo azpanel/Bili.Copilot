@@ -49,7 +49,6 @@ public sealed partial class MomentCardControl : LayoutControlBase<MomentItemView
     /// <inheritdoc/>
     protected override void OnViewModelChanged(MomentItemViewModel? oldValue, MomentItemViewModel? newValue)
     {
-        ContextFlyout = null;  // ← 加这一行
         if (_rootCard is not null)
         {
             _rootCard.Command = newValue?.ActivateCommand;
