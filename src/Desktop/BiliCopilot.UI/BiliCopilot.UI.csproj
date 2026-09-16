@@ -1025,14 +1025,14 @@
   	</None>
   </ItemGroup>
   <ItemGroup Condition="'$(Platform)' == 'x64'">
-      <None Update="Assets\ffmpeg\x64\ffmpeg.exe">
+      <Content Include="Assets\ffmpeg\x64\ffmpeg.exe">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
+      </Content>
   </ItemGroup>
   <ItemGroup Condition="'$(Platform)' == 'ARM64'">
-      <None Update="Assets\ffmpeg\arm64\ffmpeg.exe">
+      <Content Include="Assets\ffmpeg\arm64\ffmpeg.exe">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
+      </Content>
   </ItemGroup>
   <ItemGroup Condition="'$(Platform)' == 'x64'">
     <None Update="Assets\BBDown\x64\BBDown.exe">
