@@ -1002,6 +1002,18 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  <PropertyGroup Condition="'$(Platform)' == 'x64'">
+    <LibMpvPath>$(MSBuildProjectDirectory)\Assets\libmpv\x64\libmpv-2.dll</LibMpvPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Platform)' == 'ARM64'">
+    <LibMpvPath>$(MSBuildProjectDirectory)\Assets\libmpv\arm64\libmpv-2.dll</LibMpvPath>
+  </PropertyGroup>
+  <Target Name="EnsureLibMpvExists"
+          BeforeTargets="PrepareForBuild"
+          Condition="'$(Platform)' == 'x64' Or '$(Platform)' == 'ARM64'">
+    <Error Condition="!Exists('$(LibMpvPath)')"
+           Text="Missing libmpv for $(Platform). Run: powershell -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\..\..\scripts\Setup-LibMpv.ps1&quot; -Platform $(Platform)" />
+  </Target>
   <ItemGroup Condition="'$(Platform)' == 'x64'">
   	<None Update="Assets\visor\x64\*">
   		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
