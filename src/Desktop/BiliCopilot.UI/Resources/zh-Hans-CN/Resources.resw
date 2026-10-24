@@ -3231,4 +3231,37 @@
   <data name="LastOpened" xml:space="preserve">
     <value>上次打开</value>
   </data>
+  <data name="MomentUnwatched" xml:space="preserve">
+    <value>待看动态</value>
+  </data>
+  <data name="MomentUnwatchedDescription" xml:space="preserve">
+    <value>按发布时间排列 · 已看视频自动归入右侧</value>
+  </data>
+  <data name="MomentWatched" xml:space="preserve">
+    <value>已看过</value>
+  </data>
+  <data name="MomentWatchedDescription" xml:space="preserve">
+    <value>观看超过 1 分钟 · 跟随左侧发布时间更新</value>
+  </data>
+  <data name="MomentWatchedTimeline" xml:space="preserve">
+    <value>对齐左侧顶部一行最右边视频的发布时间</value>
+  </data>
+  <data name="MomentWatchedEmpty" xml:space="preserve">
+    <value>这一时间段暂无已看视频</value>
+  </data>
+  <data name="MomentAllWatched" xml:space="preserve">
+    <value>已加载的视频都看过了，在右侧下翻可查看更早动态</value>
+  </data>
+  <data name="MomentHistorySyncFailed" xml:space="preserve">
+    <value>历史同步未完成，当前显示已同步及本地记录</value>
+  </data>
+  <data name="MomentHistoryRetry" xml:space="preserve">
+    <value>重试同步</value>
+  </data>
+  <data name="MomentResizePanes" xml:space="preserve">
+    <value>调整动态分区宽度</value>
+  </data>
+  <data name="MomentResizePanesDescription" xml:space="preserve">
+    <value>左右拖动调整宽度；双击恢复默认；方向键微调</value>
+  </data>
 </root>

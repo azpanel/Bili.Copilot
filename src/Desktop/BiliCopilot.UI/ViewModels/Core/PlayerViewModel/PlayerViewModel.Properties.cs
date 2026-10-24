@@ -22,6 +22,8 @@ namespace BiliCopilot.UI.ViewModels.Core;
 public sealed partial class PlayerViewModel
 {
     private MediaSnapshot _snapshot;
+    private PlaybackWatchTracker _watchTracker = new();
+    private bool _watchRecorded;
     private MediaSourceResolverBase? _sourceResolver;
     private IMpvMediaHistoryResolver? _historyResolver;
     private bool _uiElementSetted;

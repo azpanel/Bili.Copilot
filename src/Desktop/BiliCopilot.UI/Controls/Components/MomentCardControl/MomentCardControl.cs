@@ -18,7 +18,22 @@ public abstract class MomentCardPresenter : LayoutUserControlBase<MomentItemView
 /// </summary>
 public sealed partial class MomentCardControl : LayoutControlBase<MomentItemViewModel>
 {
+    /// <summary>
+    /// 是否按标准视频比例显示封面.
+    /// </summary>
+    public static readonly DependencyProperty PreserveCoverAspectRatioProperty = DependencyProperty.Register(
+        nameof(PreserveCoverAspectRatio), typeof(bool), typeof(MomentCardControl), new PropertyMetadata(false));
+
     private CardControl _rootCard;
+
+    /// <summary>
+    /// 是否保持 16:9 封面比例，并由内容决定卡片高度.
+    /// </summary>
+    public bool PreserveCoverAspectRatio
+    {
+        get => (bool)GetValue(PreserveCoverAspectRatioProperty);
+        set => SetValue(PreserveCoverAspectRatioProperty, value);
+    }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MomentCardControl"/> class.

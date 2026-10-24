@@ -15,7 +15,7 @@
     <Grid Padding="12" RowSpacing="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition x:Name="CoverRow" Height="*" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
@@ -72,11 +72,13 @@
             </Button>
         </Grid>
         <controls:BasicCoverImage
+            x:Name="VideoCover"
             Grid.Row="1"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
             CornerRadius="{StaticResource ControlCornerRadius}"
             DecodeWidth="600"
+            SizeChanged="OnCoverSizeChanged"
             Source="{x:Bind ViewModel.VideoCover, Mode=OneWay}" />
         <Border
             Grid.Row="1"

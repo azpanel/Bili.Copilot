@@ -84,6 +84,8 @@ public sealed partial class PlayerViewModel(DispatcherQueue queue, ILogger<Playe
     internal async Task InitializeAsync(MediaSnapshot snapshot)
     {
         _snapshot = snapshot;
+        _watchTracker = new PlaybackWatchTracker();
+        _watchRecorded = false;
         ErrorMessage = default;
         CacheSpeedText = default;
         ShowPlayerWindow();

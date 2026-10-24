@@ -7,6 +7,9 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Dispatching;
 using Richasy.BiliKernel.Bili.Moment;
+using Richasy.BiliKernel.Bili.User;
+using Richasy.BiliKernel.Models;
+using Richasy.BiliKernel.Models.Media;
 using Richasy.WinUIKernel.Share.ViewModels;
 
 namespace BiliCopilot.UI.ViewModels.Components;
@@ -33,7 +36,7 @@ public sealed partial class VideoMomentSectionDetailViewModel : ViewModelBase, I
     [RelayCommand]
     private async Task InitializeAsync()
     {
-        if (Items.Count > 0 || _preventLoadMore)
+        if (_allItems.Count > 0 || _preventLoadMore)
         {
             return;
         }
@@ -45,11 +48,26 @@ public sealed partial class VideoMomentSectionDetailViewModel : ViewModelBase, I
     [RelayCommand]
     private void Refresh()
     {
+        if (IsLoading || IsHistoryLoading)
+        {
+            return;
+        }
+
         _offset = default;
         _baseline = default;
         IsEmpty = false;
         _preventLoadMore = false;
         Items.Clear();
+        _allItems.Clear();
+        _momentIds.Clear();
+        WatchedItems.Clear();
+        IsWatchedEmpty = true;
+        _timelineAnchor = null;
+        _isAtTop = true;
+        TimelineTip = null;
+        _historyOffset = 0;
+        _historyExhausted = false;
+        _historyScannedThrough = DateTimeOffset.MaxValue;
         this.Get<DispatcherQueue>().TryEnqueue(DispatcherQueuePriority.Low, async () =>
         {
             await LoadItemsAsync();
@@ -58,9 +76,19 @@ public sealed partial class VideoMomentSectionDetailViewModel : ViewModelBase, I
     }
 
     [RelayCommand]
+    private async Task LoadUnwatchedItemsAsync()
+    {
+        // 左侧空了以后由右侧滚动触发加载，避免空列表自动拉完整条动态.
+        if (Items.Count > 0 || _allItems.Count == 0)
+        {
+            await LoadItemsCommand.ExecuteAsync(null);
+        }
+    }
+
+    [RelayCommand]
     private async Task LoadItemsAsync()
     {
-        if (IsEmpty || IsLoading || _preventLoadMore)
+        if (IsEmpty || IsLoading || IsHistoryLoading || _preventLoadMore)
         {
             return;
         }
@@ -76,10 +104,17 @@ public sealed partial class VideoMomentSectionDetailViewModel : ViewModelBase, I
                 _preventLoadMore = view.HasMoreMoments != true;
                 foreach (var item in view.Moments.Select(p => CreateItem(p)))
                 {
-                    Items.Add(item);
+                    if (_momentIds.Add(item.Data.Id))
+                    {
+                        _allItems.Add(item);
+                    }
                 }
 
-                ListUpdated?.Invoke(this, EventArgs.Empty);
+                SynchronizeWatchedItems();
+            }
+            else
+            {
+                _preventLoadMore = true;
             }
         }
         catch (Exception ex)
@@ -89,9 +124,12 @@ public sealed partial class VideoMomentSectionDetailViewModel : ViewModelBase, I
         }
         finally
         {
-            IsEmpty = Items.Count == 0;
+            IsEmpty = _allItems.Count == 0;
             IsLoading = false;
         }
+
+        await SynchronizeHistoryAsync();
+        ListUpdated?.Invoke(this, EventArgs.Empty);
     }
 
     private void ShowComment(MomentItemViewModel item)
@@ -103,7 +141,7 @@ public sealed partial class VideoMomentSectionDetailViewModel : ViewModelBase, I
     public void SetOpenedMarkStyle(Models.Constants.MomentVideoOpenedMarkStyle style)
     {
         _openedMarkStyle = style;
-        foreach (var item in Items)
+        foreach (var item in _allItems)
         {
             item.OpenedMarkStyle = style;
         }
@@ -122,7 +160,7 @@ public sealed partial class VideoMomentSectionDetailViewModel : ViewModelBase, I
     {
         _lastOpenedMomentId = openedItem.Data.Id;
         SettingsToolkit.WriteLocalSetting(Models.Constants.SettingNames.LastOpenedMomentVideoId, _lastOpenedMomentId);
-        foreach (var item in Items)
+        foreach (var item in _allItems)
         {
             item.IsLastOpened = ReferenceEquals(item, openedItem);
         }
@@ -130,8 +168,157 @@ public sealed partial class VideoMomentSectionDetailViewModel : ViewModelBase, I
 
     private void SaveLastTenMomentIds()
     {
-        var momentIds = Items.Take(10).Select(p => p.Data.Id).ToList();
+        var momentIds = _allItems.Take(10).Select(p => p.Data.Id).ToList();
         var lastTenMomentIds = string.Join(',', momentIds);
         SettingsToolkit.WriteLocalSetting(Models.Constants.SettingNames.LastTenMomentIds, lastTenMomentIds);
+    }
+
+    /// <summary>
+    /// 按本地和云端观看记录重新划分动态，两侧共用同一条时间线.
+    /// </summary>
+    public void SynchronizeWatchedItems()
+    {
+        var unwatched = _allItems.Where(p => !IsWatched(p)).ToList();
+        UpdateCollection(Items, unwatched);
+        IsUnwatchedEmpty = _allItems.Count > 0 && Items.Count == 0;
+        UpdateWatchedTimeline();
+    }
+
+    /// <summary>
+    /// 跟随左侧顶部一行最右边的视频定位已看时间线.
+    /// </summary>
+    public void UpdateTimelineAnchor(MomentItemViewModel? anchor, bool isAtTop)
+    {
+        if (ReferenceEquals(anchor, _timelineAnchor) && isAtTop == _isAtTop)
+        {
+            return;
+        }
+
+        _timelineAnchor = anchor;
+        _isAtTop = isAtTop;
+        TimelineTip = anchor?.Tip;
+        UpdateWatchedTimeline();
+    }
+
+    /// <summary>
+    /// 重新进入页面时从最新记录同步，避免漏掉其他设备新增的历史分页.
+    /// </summary>
+    public void ResetHistoryCursor()
+    {
+        if (!IsHistoryLoading)
+        {
+            _historyOffset = 0;
+            _historyExhausted = false;
+            _historyScannedThrough = DateTimeOffset.MaxValue;
+        }
+    }
+
+    /// <summary>
+    /// 回到动态页时重新检查其他设备的最近观看记录.
+    /// </summary>
+    [RelayCommand]
+    private async Task SynchronizeHistoryAsync()
+    {
+        if (IsHistoryLoading)
+        {
+            return;
+        }
+
+        IsHistoryLoading = true;
+        HasHistoryError = false;
+        try
+        {
+            // 历史记录按观看时间分页。观看必定晚于发布，因此只需扫描到
+            // 当前已加载动态中最早的发布时间；缺少时间时保守地扫描到末尾.
+            var cutoff = _allItems.Select(p => MomentTimelineToolkit.GetPublishLowerBound(p.PublishTime, p.Tip))
+                .DefaultIfEmpty(DateTimeOffset.MinValue).Min();
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+            var service = this.Get<IViewHistoryService>();
+            var offset = 0L;
+            var isRecentPage = true;
+            while (isRecentPage || (!_historyExhausted && _historyScannedThrough >= cutoff))
+            {
+                var group = await service.GetViewHistoryAsync(ViewHistoryTabType.Video, offset, timeout.Token);
+                foreach (var video in group?.Videos ?? Enumerable.Empty<VideoInformation>())
+                {
+                    var progress = video.GetExtensionIfNotNull<int?>(VideoExtensionDataId.Progress);
+                    if (MomentTimelineToolkit.IsWatchedProgress(progress, video.Duration))
+                    {
+                        MomentWatchHistoryToolkit.MarkWatched($"video_{video.Identifier.Id}", false);
+                    }
+                }
+
+                var next = group?.Offset ?? 0;
+                if (!isRecentPage || (_historyOffset == 0 && !_historyExhausted))
+                {
+                    _historyExhausted = next == 0 || next == offset;
+                    _historyOffset = next;
+                    // Offset 是服务游标，只使用记录中的观看日期判断扫描范围.
+                    _historyScannedThrough = (group?.Videos ?? Enumerable.Empty<VideoInformation>())
+                        .Select(p => p.GetExtensionIfNotNull<DateTimeOffset?>(VideoExtensionDataId.CollectTime)
+                            ?? DateTimeOffset.MaxValue)
+                        .DefaultIfEmpty(DateTimeOffset.MaxValue).Min();
+                }
+
+                isRecentPage = false;
+                offset = _historyOffset;
+                SynchronizeWatchedItems();
+            }
+        }
+        catch (Exception ex)
+        {
+            HasHistoryError = true;
+            _logger.LogWarning(ex, "同步动态已看记录失败，将保留已同步和本地的观看状态.");
+        }
+        finally
+        {
+            IsHistoryLoading = false;
+            ListUpdated?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    private static bool IsWatched(MomentItemViewModel item)
+        => item.WatchHistoryKey is { } key && MomentWatchHistoryToolkit.IsWatched(key);
+
+    private void UpdateWatchedTimeline()
+    {
+        var anchorIndex = _timelineAnchor is null ? 0 : _allItems.IndexOf(_timelineAnchor);
+        var watched = _allItems.Where((item, index) => IsWatched(item)
+            && MomentTimelineToolkit.IsInWatchedWindow(item.PublishTime, index,
+                _timelineAnchor?.PublishTime, anchorIndex, _isAtTop)).ToList();
+        UpdateCollection(WatchedItems, watched);
+        IsWatchedEmpty = WatchedItems.Count == 0;
+    }
+
+    private static void UpdateCollection(
+        System.Collections.ObjectModel.ObservableCollection<MomentItemViewModel> target,
+        List<MomentItemViewModel> source)
+    {
+        var included = source.ToHashSet();
+        for (var i = target.Count - 1; i >= 0; i--)
+        {
+            if (!included.Contains(target[i]))
+            {
+                target.RemoveAt(i);
+            }
+        }
+
+        for (var i = 0; i < source.Count; i++)
+        {
+            if (i < target.Count && ReferenceEquals(target[i], source[i]))
+            {
+                continue;
+            }
+
+            var oldIndex = target.IndexOf(source[i]);
+            if (oldIndex >= 0)
+            {
+                target.Move(oldIndex, i);
+            }
+            else
+            {
+                target.Insert(i, source[i]);
+            }
+        }
     }
 }

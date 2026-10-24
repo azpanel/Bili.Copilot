@@ -13,6 +13,11 @@ public sealed partial class IncrementVerticalScrollControl : LayoutUserControlBa
 
     public IncrementVerticalScrollControl() => InitializeComponent();
 
+    /// <summary>
+    /// 滚动位置已变化，供时间线等关联视图同步位置.
+    /// </summary>
+    public event EventHandler? ScrollPositionChanged;
+
     public object Element
     {
         get => (object)GetValue(ElementProperty);
@@ -66,6 +71,7 @@ public sealed partial class IncrementVerticalScrollControl : LayoutUserControlBa
     private void OnViewChanged(ScrollView sender, object e)
     {
         CheckItemsCount();
+        ScrollPositionChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private void OnViewSizeChanged(object sender, SizeChangedEventArgs e)

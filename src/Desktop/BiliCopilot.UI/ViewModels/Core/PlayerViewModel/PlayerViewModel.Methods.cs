@@ -460,8 +460,39 @@ public sealed partial class PlayerViewModel
         }
     }
 
+    private void TrackWatchedVideo()
+    {
+        if (_watchRecorded || IsConnecting || _snapshot is null || _snapshot.IsPrivate)
+        {
+            return;
+        }
+
+        if (!_watchTracker.Observe(Player.Position, System.Diagnostics.Stopwatch.GetElapsedTime(0),
+            Player.PlaybackState == MpvPlayerState.Playing, Player.PlaybackRate))
+        {
+            return;
+        }
+
+        var key = _snapshot.Type switch
+        {
+            BiliMediaType.Video => $"video_{_snapshot.Video!.Identifier.Id}",
+            BiliMediaType.Pgc when Connector is PgcConnectorViewModel pgc => $"episode_{pgc._episode.Identifier.Id}",
+            _ => null,
+        };
+        if (key is not null)
+        {
+            _watchRecorded = true;
+            queue.TryEnqueue(() => MomentWatchHistoryToolkit.MarkWatched(key));
+        }
+    }
+
     private async void OnPlayerPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName is nameof(Player.Position) or nameof(Player.PlaybackState))
+        {
+            TrackWatchedVideo();
+        }
+
         if (e.PropertyName == nameof(Player.Position))
         {
             IsPreviewProgressChanging = false;

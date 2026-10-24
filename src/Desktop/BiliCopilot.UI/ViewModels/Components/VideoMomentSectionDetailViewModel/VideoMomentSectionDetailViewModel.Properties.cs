@@ -22,12 +22,34 @@ public sealed partial class VideoMomentSectionDetailViewModel
     private string? _baseline;
     private string? _lastOpenedMomentId;
     private MomentVideoOpenedMarkStyle _openedMarkStyle;
+    private readonly List<MomentItemViewModel> _allItems = new();
+    private readonly HashSet<string> _momentIds = new();
+    private long _historyOffset;
+    private bool _historyExhausted;
+    private DateTimeOffset _historyScannedThrough = DateTimeOffset.MaxValue;
+    private MomentItemViewModel? _timelineAnchor;
+    private bool _isAtTop = true;
 
     [ObservableProperty]
     private bool _isEmpty;
 
     [ObservableProperty]
     private bool _isLoading;
+
+    [ObservableProperty]
+    private bool _isHistoryLoading;
+
+    [ObservableProperty]
+    private bool _isWatchedEmpty = true;
+
+    [ObservableProperty]
+    private bool _isUnwatchedEmpty;
+
+    [ObservableProperty]
+    private string? _timelineTip;
+
+    [ObservableProperty]
+    private bool _hasHistoryError;
 
     /// <summary>
     /// 列表已完成更新.
@@ -41,4 +63,9 @@ public sealed partial class VideoMomentSectionDetailViewModel
     /// 条目列表.
     /// </summary>
     public ObservableCollection<MomentItemViewModel> Items { get; } = new();
+
+    /// <summary>
+    /// 跟随左侧当前时间位置显示的已看视频.
+    /// </summary>
+    public ObservableCollection<MomentItemViewModel> WatchedItems { get; } = new();
 }

@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.Logging;
 using Richasy.BiliKernel.Bili.Moment;
 using Richasy.BiliKernel.Models.Appearance;
+using Richasy.BiliKernel.Models.Media;
 
 namespace BiliCopilot.UI.ViewModels.Items;
 
@@ -85,6 +86,21 @@ public sealed partial class MomentItemViewModel
     /// 卡片样式.
     /// </summary>
     public MomentCardStyle Style { get; init; }
+
+    /// <summary>
+    /// 用于匹配观看记录的媒体标识.
+    /// </summary>
+    public string? WatchHistoryKey => FindInnerContent<VideoInformation>() is { } video
+        ? $"video_{video.Identifier.Id}"
+        : FindInnerContent<EpisodeInformation>() is { } episode && episode.Identifier.Id != "0"
+            ? $"episode_{episode.Identifier.Id}"
+            : null;
+
+    /// <summary>
+    /// 视频发布时间（动态接口部分条目仅提供时间提示）.
+    /// </summary>
+    public DateTimeOffset? PublishTime => FindInnerContent<VideoInformation>()?.PublishTime
+        ?? FindInnerContent<EpisodeInformation>()?.PublishTime;
 
     /// <summary>
     /// 是否显示强调色边框标记.

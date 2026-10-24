@@ -144,4 +144,5 @@ public enum SettingNames
     LastOpenedMomentVideoId,
     LastOpenedPopularVideoId,
     MomentVideoOpenedMarkStyle,
+    MomentVideoLeftPaneRatio,
 }

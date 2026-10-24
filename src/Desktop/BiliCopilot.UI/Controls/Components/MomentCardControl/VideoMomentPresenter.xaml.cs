@@ -8,7 +8,47 @@ namespace BiliCopilot.UI.Controls.Components;
 public sealed partial class VideoMomentPresenter : MomentCardPresenter
 {
     /// <summary>
+    /// 是否按标准视频比例显示封面.
+    /// </summary>
+    public static readonly DependencyProperty PreserveCoverAspectRatioProperty = DependencyProperty.Register(
+        nameof(PreserveCoverAspectRatio), typeof(bool), typeof(VideoMomentPresenter),
+        new PropertyMetadata(false, OnCoverAspectRatioChanged));
+
+    /// <summary>
+    /// 是否保持 16:9 封面比例.
+    /// </summary>
+    public bool PreserveCoverAspectRatio
+    {
+        get => (bool)GetValue(PreserveCoverAspectRatioProperty);
+        set => SetValue(PreserveCoverAspectRatioProperty, value);
+    }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="VideoMomentPresenter"/> class.
     /// </summary>
     public VideoMomentPresenter() => InitializeComponent();
+
+    private static void OnCoverAspectRatioChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args)
+        => ((VideoMomentPresenter)sender).UpdateCoverLayout();
+
+    private void OnCoverSizeChanged(object sender, SizeChangedEventArgs args)
+    {
+        if (PreserveCoverAspectRatio && args.NewSize.Width > 0)
+        {
+            VideoCover.Height = args.NewSize.Width * 9 / 16;
+        }
+    }
+
+    private void UpdateCoverLayout()
+    {
+        if (CoverRow is null || VideoCover is null)
+        {
+            return;
+        }
+
+        CoverRow.Height = PreserveCoverAspectRatio ? GridLength.Auto : new GridLength(1, GridUnitType.Star);
+        VideoCover.Height = PreserveCoverAspectRatio && VideoCover.ActualWidth > 0
+            ? VideoCover.ActualWidth * 9 / 16
+            : double.NaN;
+    }
 }

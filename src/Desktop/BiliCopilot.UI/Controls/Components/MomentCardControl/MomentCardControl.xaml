@@ -14,7 +14,9 @@
                 <ControlTemplate TargetType="local:MomentCardControl">
                     <Grid Opacity="{Binding RelativeSource={RelativeSource Mode=TemplatedParent}, Path=ViewModel.OpenedCardOpacity}">
                         <base:CardControl x:Name="RootCard">
-                            <local:VideoMomentPresenter ViewModel="{TemplateBinding ViewModel}" />
+                            <local:VideoMomentPresenter
+                                PreserveCoverAspectRatio="{TemplateBinding PreserveCoverAspectRatio}"
+                                ViewModel="{TemplateBinding ViewModel}" />
                         </base:CardControl>
                         <Border
                             IsHitTestVisible="False"

@@ -262,7 +262,7 @@ public sealed partial class MomentItemViewModel : ViewModelBase<MomentInformatio
         return default;
     }
 
-    private T? FindInnerContent<T>()
+    internal T? FindInnerContent<T>()
         where T : class
     {
         if (Data.Data is T info)
