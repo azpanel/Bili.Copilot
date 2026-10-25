@@ -31,24 +31,13 @@ public sealed partial class VideoMomentPresenter : MomentCardPresenter
     private static void OnCoverAspectRatioChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args)
         => ((VideoMomentPresenter)sender).UpdateCoverLayout();
 
-    private void OnCoverSizeChanged(object sender, SizeChangedEventArgs args)
-    {
-        if (PreserveCoverAspectRatio && args.NewSize.Width > 0)
-        {
-            VideoCover.Height = args.NewSize.Width * 9 / 16;
-        }
-    }
-
     private void UpdateCoverLayout()
     {
-        if (CoverRow is null || VideoCover is null)
+        if (CoverRow is null)
         {
             return;
         }
 
         CoverRow.Height = PreserveCoverAspectRatio ? GridLength.Auto : new GridLength(1, GridUnitType.Star);
-        VideoCover.Height = PreserveCoverAspectRatio && VideoCover.ActualWidth > 0
-            ? VideoCover.ActualWidth * 9 / 16
-            : double.NaN;
     }
 }

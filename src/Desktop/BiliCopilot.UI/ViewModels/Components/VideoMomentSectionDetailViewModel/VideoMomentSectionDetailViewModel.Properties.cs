@@ -23,12 +23,15 @@ public sealed partial class VideoMomentSectionDetailViewModel
     private string? _lastOpenedMomentId;
     private MomentVideoOpenedMarkStyle _openedMarkStyle;
     private readonly List<MomentItemViewModel> _allItems = new();
+    private readonly List<(MomentItemViewModel Item, int Index)> _watchedTimeline = new();
     private readonly HashSet<string> _momentIds = new();
     private long _historyOffset;
     private bool _historyExhausted;
     private DateTimeOffset _historyScannedThrough = DateTimeOffset.MaxValue;
     private MomentItemViewModel? _timelineAnchor;
     private bool _isAtTop = true;
+    private bool _areTimelineUpdatesSuspended;
+    private bool _hasDeferredWatchedUpdate;
 
     [ObservableProperty]
     private bool _isEmpty;

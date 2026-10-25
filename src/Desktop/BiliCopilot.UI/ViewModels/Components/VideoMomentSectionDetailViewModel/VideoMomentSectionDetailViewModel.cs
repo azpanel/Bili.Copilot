@@ -48,7 +48,7 @@ public sealed partial class VideoMomentSectionDetailViewModel : ViewModelBase, I
     [RelayCommand]
     private void Refresh()
     {
-        if (IsLoading || IsHistoryLoading)
+        if (IsLoading || IsHistoryLoading || _areTimelineUpdatesSuspended)
         {
             return;
         }
@@ -59,6 +59,7 @@ public sealed partial class VideoMomentSectionDetailViewModel : ViewModelBase, I
         _preventLoadMore = false;
         Items.Clear();
         _allItems.Clear();
+        _watchedTimeline.Clear();
         _momentIds.Clear();
         WatchedItems.Clear();
         IsWatchedEmpty = true;
@@ -88,7 +89,7 @@ public sealed partial class VideoMomentSectionDetailViewModel : ViewModelBase, I
     [RelayCommand]
     private async Task LoadItemsAsync()
     {
-        if (IsEmpty || IsLoading || IsHistoryLoading || _preventLoadMore)
+        if (IsEmpty || IsLoading || IsHistoryLoading || _preventLoadMore || _areTimelineUpdatesSuspended)
         {
             return;
         }
@@ -178,7 +179,27 @@ public sealed partial class VideoMomentSectionDetailViewModel : ViewModelBase, I
     /// </summary>
     public void SynchronizeWatchedItems()
     {
-        var unwatched = _allItems.Where(p => !IsWatched(p)).ToList();
+        if (_areTimelineUpdatesSuspended)
+        {
+            _hasDeferredWatchedUpdate = true;
+            return;
+        }
+
+        var unwatched = new List<MomentItemViewModel>();
+        _watchedTimeline.Clear();
+        for (var i = 0; i < _allItems.Count; i++)
+        {
+            var item = _allItems[i];
+            if (IsWatched(item))
+            {
+                _watchedTimeline.Add((item, i));
+            }
+            else
+            {
+                unwatched.Add(item);
+            }
+        }
+
         UpdateCollection(Items, unwatched);
         IsUnwatchedEmpty = _allItems.Count > 0 && Items.Count == 0;
         UpdateWatchedTimeline();
@@ -189,7 +210,7 @@ public sealed partial class VideoMomentSectionDetailViewModel : ViewModelBase, I
     /// </summary>
     public void UpdateTimelineAnchor(MomentItemViewModel? anchor, bool isAtTop)
     {
-        if (ReferenceEquals(anchor, _timelineAnchor) && isAtTop == _isAtTop)
+        if (_areTimelineUpdatesSuspended || (ReferenceEquals(anchor, _timelineAnchor) && isAtTop == _isAtTop))
         {
             return;
         }
@@ -198,6 +219,19 @@ public sealed partial class VideoMomentSectionDetailViewModel : ViewModelBase, I
         _isAtTop = isAtTop;
         TimelineTip = anchor?.Tip;
         UpdateWatchedTimeline();
+    }
+
+    /// <summary>
+    /// 拖动分栏时延后集合更新，结束后只补一次同步.
+    /// </summary>
+    public void SetTimelineUpdatesSuspended(bool suspended)
+    {
+        _areTimelineUpdatesSuspended = suspended;
+        if (!suspended && _hasDeferredWatchedUpdate)
+        {
+            _hasDeferredWatchedUpdate = false;
+            SynchronizeWatchedItems();
+        }
     }
 
     /// <summary>
@@ -283,9 +317,9 @@ public sealed partial class VideoMomentSectionDetailViewModel : ViewModelBase, I
     private void UpdateWatchedTimeline()
     {
         var anchorIndex = _timelineAnchor is null ? 0 : _allItems.IndexOf(_timelineAnchor);
-        var watched = _allItems.Where((item, index) => IsWatched(item)
-            && MomentTimelineToolkit.IsInWatchedWindow(item.PublishTime, index,
-                _timelineAnchor?.PublishTime, anchorIndex, _isAtTop)).ToList();
+        var watched = _watchedTimeline.Where(entry => MomentTimelineToolkit.IsInWatchedWindow(
+                entry.Item.PublishTime, entry.Index, _timelineAnchor?.PublishTime, anchorIndex, _isAtTop))
+            .Select(entry => entry.Item).ToList();
         UpdateCollection(WatchedItems, watched);
         IsWatchedEmpty = WatchedItems.Count == 0;
     }
@@ -294,6 +328,11 @@ public sealed partial class VideoMomentSectionDetailViewModel : ViewModelBase, I
         System.Collections.ObjectModel.ObservableCollection<MomentItemViewModel> target,
         List<MomentItemViewModel> source)
     {
+        if (target.Count == source.Count && target.SequenceEqual(source))
+        {
+            return;
+        }
+
         var included = source.ToHashSet();
         for (var i = target.Count - 1; i >= 0; i--)
         {

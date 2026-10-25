@@ -12,25 +12,41 @@ internal static class MomentWatchHistoryToolkit
 {
     private static ApplicationDataContainer? _container;
     private static string? _userId;
+    private static readonly Dictionary<string, bool> _watchedStates = new(StringComparer.Ordinal);
 
     public static event EventHandler? WatchedChanged;
 
     public static bool IsWatched(string mediaKey)
-        => GetContainer()?.Values.ContainsKey(mediaKey) == true;
+    {
+        var container = GetContainer();
+        return container is not null && IsWatched(container, mediaKey);
+    }
 
     public static void MarkWatched(string mediaKey, bool notify = true)
     {
         var container = GetContainer();
-        if (container is null || container.Values.ContainsKey(mediaKey))
+        if (container is null || IsWatched(container, mediaKey))
         {
             return;
         }
 
         container.Values[mediaKey] = true;
+        _watchedStates[mediaKey] = true;
         if (notify)
         {
             WatchedChanged?.Invoke(null, EventArgs.Empty);
         }
+    }
+
+    private static bool IsWatched(ApplicationDataContainer container, string mediaKey)
+    {
+        if (!_watchedStates.TryGetValue(mediaKey, out var watched))
+        {
+            watched = container.Values.ContainsKey(mediaKey);
+            _watchedStates[mediaKey] = watched;
+        }
+
+        return watched;
     }
 
     private static ApplicationDataContainer? GetContainer()
@@ -43,6 +59,7 @@ internal static class MomentWatchHistoryToolkit
 
         if (_container is null || userId != _userId)
         {
+            _watchedStates.Clear();
             _userId = userId;
             _container = ApplicationData.GetDefault().LocalSettings
                 .CreateContainer("MomentWatchHistory", ApplicationDataCreateDisposition.Always)

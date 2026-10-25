@@ -71,30 +71,30 @@
                 </Button.Flyout>
             </Button>
         </Grid>
-        <controls:BasicCoverImage
-            x:Name="VideoCover"
+        <controls:VideoCoverPanel
             Grid.Row="1"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            CornerRadius="{StaticResource ControlCornerRadius}"
-            DecodeWidth="600"
-            SizeChanged="OnCoverSizeChanged"
-            Source="{x:Bind ViewModel.VideoCover, Mode=OneWay}" />
-        <Border
-            Grid.Row="1"
-            Margin="8"
-            Padding="4"
-            HorizontalAlignment="Left"
-            VerticalAlignment="Bottom"
-            CornerRadius="{StaticResource ControlCornerRadius}">
-            <Border.Background>
-                <SolidColorBrush Opacity="0.6" Color="Black" />
-            </Border.Background>
-            <TextBlock
-                Foreground="White"
-                Style="{StaticResource CaptionTextBlockStyle}"
-                Text="{x:Bind ViewModel.VideoDuration, Mode=OneWay}" />
-        </Border>
+            PreserveAspectRatio="{x:Bind PreserveCoverAspectRatio, Mode=OneWay}">
+            <controls:BasicCoverImage
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                CornerRadius="{StaticResource ControlCornerRadius}"
+                DecodeWidth="600"
+                Source="{x:Bind ViewModel.VideoCover, Mode=OneWay}" />
+            <Border
+                Margin="8"
+                Padding="4"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Bottom"
+                CornerRadius="{StaticResource ControlCornerRadius}">
+                <Border.Background>
+                    <SolidColorBrush Opacity="0.6" Color="Black" />
+                </Border.Background>
+                <TextBlock
+                    Foreground="White"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="{x:Bind ViewModel.VideoDuration, Mode=OneWay}" />
+            </Border>
+        </controls:VideoCoverPanel>
         <base:TrimTextBlock
             Grid.Row="2"
             HorizontalAlignment="Left"

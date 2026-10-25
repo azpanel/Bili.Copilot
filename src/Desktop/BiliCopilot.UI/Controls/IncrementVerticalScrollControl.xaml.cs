@@ -5,6 +5,13 @@ namespace BiliCopilot.UI.Controls;
 
 public sealed partial class IncrementVerticalScrollControl : LayoutUserControlBase
 {
+    private bool _loadCheckQueued;
+
+    /// <summary>
+    /// 临时暂停自动加载，避免调整分栏时发起新请求.
+    /// </summary>
+    public bool IsLoadMorePaused { get; set; }
+
     public static readonly DependencyProperty ElementProperty =
         DependencyProperty.Register(nameof(Element), typeof(object), typeof(IncrementVerticalScrollControl), new PropertyMetadata(default));
 
@@ -84,9 +91,16 @@ public sealed partial class IncrementVerticalScrollControl : LayoutUserControlBa
 
     private void CheckItemsCount()
     {
+        if (IsLoadMorePaused || _loadCheckQueued)
+        {
+            return;
+        }
+
+        _loadCheckQueued = true;
         DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
         {
-            if (View.ExtentHeight - View.ViewportHeight - View.VerticalOffset <= 800)
+            _loadCheckQueued = false;
+            if (!IsLoadMorePaused && IsLoaded && View.ExtentHeight - View.ViewportHeight - View.VerticalOffset <= 800)
             {
                 LoadMoreCommand?.Execute(default);
             }

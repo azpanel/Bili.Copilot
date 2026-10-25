@@ -1,4 +1,4 @@
-﻿// Copyright (c) Bili Copilot. All rights reserved.
+// Copyright (c) Bili Copilot. All rights reserved.
 
 using BiliCopilot.UI.ViewModels.Components;
 using BiliCopilot.UI.Toolkits;
@@ -23,6 +23,9 @@ public sealed partial class VideoMomentSectionDetailControl : VideoMomentSection
     private bool _paneWidthDirty;
     private double _preferredLeftPaneRatio;
     private Microsoft.UI.Dispatching.DispatcherQueueTimer? _savePaneWidthTimer;
+    private bool _isPaneResizing;
+    private bool _paneResizeFrameQueued;
+    private double? _pendingLeftWidth;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VideoMomentSectionDetailControl"/> class.
@@ -30,6 +33,14 @@ public sealed partial class VideoMomentSectionDetailControl : VideoMomentSection
     public VideoMomentSectionDetailControl()
     {
         InitializeComponent();
+        ColumnResizer.AddHandler(PointerPressedEvent,
+            new Microsoft.UI.Xaml.Input.PointerEventHandler(OnSplitterPointerPressed), true);
+        ColumnResizer.AddHandler(PointerReleasedEvent,
+            new Microsoft.UI.Xaml.Input.PointerEventHandler(OnSplitterPointerFinished), true);
+        ColumnResizer.AddHandler(PointerCanceledEvent,
+            new Microsoft.UI.Xaml.Input.PointerEventHandler(OnSplitterPointerFinished), true);
+        ColumnResizer.AddHandler(PointerCaptureLostEvent,
+            new Microsoft.UI.Xaml.Input.PointerEventHandler(OnSplitterPointerFinished), true);
         _preferredLeftPaneRatio = SettingsToolkit.ReadLocalSetting(SettingNames.MomentVideoLeftPaneRatio, -1d);
         if (!double.IsFinite(_preferredLeftPaneRatio) || _preferredLeftPaneRatio <= 0 || _preferredLeftPaneRatio >= 1)
         {
@@ -62,6 +73,13 @@ public sealed partial class VideoMomentSectionDetailControl : VideoMomentSection
     /// <inheritdoc/>
     protected override void OnControlUnloaded()
     {
+        FlushPendingPaneWidth();
+        _pendingLeftWidth = null;
+        Microsoft.UI.Xaml.Media.CompositionTarget.Rendering -= OnPaneResizeFrame;
+        _paneResizeFrameQueued = false;
+        _isPaneResizing = false;
+        View.IsLoadMorePaused = false;
+        ViewModel.SetTimelineUpdatesSuspended(false);
         ViewModel.ListUpdated -= OnListUpdatedAsync;
         MomentWatchHistoryToolkit.WatchedChanged -= OnWatchedChanged;
         _isActive = false;
@@ -106,7 +124,7 @@ public sealed partial class VideoMomentSectionDetailControl : VideoMomentSection
     {
         ViewModel.SynchronizeWatchedItems();
         QueueAnchorUpdate();
-        if (ViewModel.Items.Count > 0)
+        if (!_isPaneResizing && ViewModel.Items.Count > 0)
         {
             _ = View.DelayCheckItemsAsync();
         }
@@ -136,10 +154,26 @@ public sealed partial class VideoMomentSectionDetailControl : VideoMomentSection
         _isApplyingPaneWidth = true;
         try
         {
-            ColumnResizer.MinColumnWidth = minLeft;
-            ColumnResizer.MaxColumnWidth = maxLeft;
-            ColumnResizer.ColumnWidth = leftWidth;
-            WatchedColumn.Width = new GridLength(available - leftWidth);
+            if (ColumnResizer.MinColumnWidth != minLeft)
+            {
+                ColumnResizer.MinColumnWidth = minLeft;
+            }
+
+            if (ColumnResizer.MaxColumnWidth != maxLeft)
+            {
+                ColumnResizer.MaxColumnWidth = maxLeft;
+            }
+
+            if (Math.Abs(ColumnResizer.ColumnWidth - leftWidth) > 0.01)
+            {
+                ColumnResizer.ColumnWidth = leftWidth;
+            }
+
+            var rightWidth = Math.Round(available - leftWidth);
+            if (Math.Abs(WatchedColumn.Width.Value - rightWidth) >= 1)
+            {
+                WatchedColumn.Width = new GridLength(rightWidth);
+            }
         }
         finally
         {
@@ -156,11 +190,67 @@ public sealed partial class VideoMomentSectionDetailControl : VideoMomentSection
             return;
         }
 
-        ApplyPaneWidths(ColumnResizer.ColumnWidth);
+        _pendingLeftWidth = ColumnResizer.ColumnWidth;
+        if (!_paneResizeFrameQueued)
+        {
+            _paneResizeFrameQueued = true;
+            Microsoft.UI.Xaml.Media.CompositionTarget.Rendering += OnPaneResizeFrame;
+        }
+    }
+
+    private void OnPaneResizeFrame(object? sender, object args)
+    {
+        Microsoft.UI.Xaml.Media.CompositionTarget.Rendering -= OnPaneResizeFrame;
+        _paneResizeFrameQueued = false;
+        if (_isActive)
+        {
+            FlushPendingPaneWidth();
+        }
+    }
+
+    private void FlushPendingPaneWidth()
+    {
+        if (_pendingLeftWidth is not { } width || LayoutRoot.ActualWidth <= 12)
+        {
+            return;
+        }
+
+        _pendingLeftWidth = null;
+        ApplyPaneWidths(width);
         _preferredLeftPaneRatio = ColumnResizer.ColumnWidth / (LayoutRoot.ActualWidth - 12);
         _paneWidthDirty = true;
         _savePaneWidthTimer?.Stop();
         _savePaneWidthTimer?.Start();
+    }
+
+    private void OnSplitterPointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs args)
+    {
+        if (!_isActive || !args.GetCurrentPoint(ColumnResizer).IsInContact)
+        {
+            return;
+        }
+
+        _isPaneResizing = true;
+        View.IsLoadMorePaused = true;
+        ViewModel.SetTimelineUpdatesSuspended(true);
+        ClearItemAnimations(_itemsRepeater);
+        ClearItemAnimations(_watchedRepeater);
+    }
+
+    private void OnSplitterPointerFinished(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs args)
+    {
+        if (!_isPaneResizing)
+        {
+            return;
+        }
+
+        FlushPendingPaneWidth();
+        _isPaneResizing = false;
+        View.IsLoadMorePaused = false;
+        ViewModel.SetTimelineUpdatesSuspended(false);
+        QueueAnchorUpdate();
+        _ = View.DelayCheckItemsAsync();
+        CheckWatchedLoadMore();
     }
 
     private void OnSavePaneWidthTick(Microsoft.UI.Dispatching.DispatcherQueueTimer sender, object args)
@@ -177,6 +267,7 @@ public sealed partial class VideoMomentSectionDetailControl : VideoMomentSection
 
     private void OnSplitterDoubleTapped(object sender, Microsoft.UI.Xaml.Input.DoubleTappedRoutedEventArgs e)
     {
+        _pendingLeftWidth = null;
         _preferredLeftPaneRatio = double.NaN;
         _paneWidthDirty = false;
         _savePaneWidthTimer?.Stop();
@@ -200,7 +291,7 @@ public sealed partial class VideoMomentSectionDetailControl : VideoMomentSection
 
     private void CheckWatchedLoadMore()
     {
-        if (_isActive && ViewModel.Items.Count == 0 && !ViewModel.IsHistoryLoading && !ViewModel.IsLoading
+        if (_isActive && !_isPaneResizing && ViewModel.Items.Count == 0 && !ViewModel.IsHistoryLoading && !ViewModel.IsLoading
             && WatchedView.ExtentHeight - WatchedView.ViewportHeight - WatchedView.VerticalOffset <= 400)
         {
             ViewModel.LoadItemsCommand.Execute(default);
@@ -211,7 +302,7 @@ public sealed partial class VideoMomentSectionDetailControl : VideoMomentSection
 
     private void QueueAnchorUpdate()
     {
-        if (!_isActive || _anchorUpdateQueued)
+        if (!_isActive || _isPaneResizing || _anchorUpdateQueued)
         {
             return;
         }
@@ -220,7 +311,7 @@ public sealed partial class VideoMomentSectionDetailControl : VideoMomentSection
         DispatcherQueue.TryEnqueue(() =>
         {
             _anchorUpdateQueued = false;
-            if (_isActive)
+            if (_isActive && !_isPaneResizing)
             {
                 UpdateTimelineAnchor();
             }
@@ -305,8 +396,14 @@ public sealed partial class VideoMomentSectionDetailControl : VideoMomentSection
     private void OnMomentElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
         => SetItemTransitions(args.Element);
 
-    private static void SetItemTransitions(UIElement element)
+    private void SetItemTransitions(UIElement element)
     {
+        if (_isPaneResizing)
+        {
+            element.Transitions = null;
+            return;
+        }
+
         element.Transitions = new Microsoft.UI.Xaml.Media.Animation.TransitionCollection
         {
             new Microsoft.UI.Xaml.Media.Animation.EntranceThemeTransition
@@ -316,6 +413,22 @@ public sealed partial class VideoMomentSectionDetailControl : VideoMomentSection
                 IsStaggeringEnabled = false,
             },
         };
+    }
+
+    private static void ClearItemAnimations(ItemsRepeater? repeater)
+    {
+        if (repeater is null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChildrenCount(repeater); i++)
+        {
+            if (Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(repeater, i) is UIElement element)
+            {
+                element.Transitions = null;
+            }
+        }
     }
 
     private static ItemsRepeater? FindRepeater(DependencyObject parent)
